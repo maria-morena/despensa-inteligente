@@ -1,0 +1,351 @@
+{
+  "name": "Despensa — Telegram",
+  "nodes": [
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Você organiza compras de supermercado de uma pessoa que mora sozinha.\n\nTarefa: extraia cada produto do texto abaixo.\nPara cada produto, informe:\n- item: nome simples, no singular e em minúsculas\n- categoria: uma destas — hortifrúti, laticínios, carnes, padaria, mercearia, bebidas, limpeza, outros\n- quantidade: como escrito no texto; se não houver, use \"1\"\n- validade_estimada_dias: quantos dias o produto costuma durar na geladeira ou despensa depois de comprado; se não souber, use null\n\nRegras:\n- Não invente produtos que não estão no texto.\n- Não inclua comentários, só os dados pedidos.\n\nTexto da compra: {{ $json.message.text }}",
+        "hasOutputParser": true,
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.9,
+      "position": [
+        224,
+        0
+      ],
+      "id": "9bc89cb2-2238-4481-9d34-be7fc26c641d",
+      "name": "Basic LLM Chain"
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-3.6-flash",
+        "options": {
+          "temperature": 0.2
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1.2,
+      "position": [
+        112,
+        208
+      ],
+      "id": "b84d4393-9b18-4665-adde-412fb509ddd2",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "5bw4IPqn6NqFbe9P",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "{\"itens\":[{\"item\":\"leite\",\"categoria\":\"laticínios\",\"quantidade\":\"1 L\",\"validade_estimada_dias\":7}]}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        368,
+        208
+      ],
+      "id": "4a594950-8cad-4f33-8005-77409ce0c6e4",
+      "name": "Structured Output Parser"
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "output.itens",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1.1,
+      "position": [
+        896,
+        16
+      ],
+      "id": "a0f6e6ae-1cb2-4e3d-b54f-043a18a1ca40",
+      "name": "Split Out"
+    },
+    {
+      "parameters": {
+        "dataTableId": {
+          "__rl": true,
+          "value": "YadFalJ1nhOVGtmr",
+          "mode": "list",
+          "cachedResultName": "despensa",
+          "cachedResultUrl": "/projects/FyvjRaaJ3ruWjJol/datatables/YadFalJ1nhOVGtmr"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "item": "={{ $json.item }}",
+            "categoria": "={{ $json.categoria }}",
+            "quantidade": "={{ $json.quantidade }}",
+            "validade_estimada_dias": "={{ $json.validade_estimada_dias }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "item",
+              "displayName": "item",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "categoria",
+              "displayName": "categoria",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "quantidade",
+              "displayName": "quantidade",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "validade_estimada_dias",
+              "displayName": "validade_estimada_dias",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        1248,
+        16
+      ],
+      "id": "2331186f-dc53-49ec-96ce-f4ad7610d7c0",
+      "name": "Insert row"
+    },
+    {
+      "parameters": {
+        "updates": [
+          "message"
+        ],
+        "additionalFields": {
+          "chatIds": "6721977190"
+        }
+      },
+      "type": "n8n-nodes-base.telegramTrigger",
+      "typeVersion": 1.5,
+      "position": [
+        0,
+        0
+      ],
+      "id": "ace9b96f-b676-45cb-8421-fad140c3ffc4",
+      "name": "Telegram Trigger",
+      "webhookId": "86f3d660-dfc3-4795-8abf-46d425cb0fd9",
+      "credentials": {
+        "telegramApi": {
+          "id": "LGRnPj9gTEgOttc7",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 4
+          },
+          "conditions": [
+            {
+              "id": "0ee607a2-654c-4524-952e-4a1590ebf210",
+              "leftValue": "={{ $json.output.itens.length }}",
+              "rightValue": 0,
+              "operator": {
+                "type": "number",
+                "operation": "gt"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.4,
+      "position": [
+        624,
+        16
+      ],
+      "id": "8bcf1b95-0d87-4371-a3be-b7e2d0d251dd",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Telegram Trigger').item.json.message.chat.id }}",
+        "text": "=✅ Registrei {{ $('Basic LLM Chain').item.json.output.itens.length }} itens: {{ $('Basic LLM Chain').item.json.output.itens.map(i => '• ' + i.item + ' (' + i.quantidade + ')').join('\\n') }}",
+        "additionalFields": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        1472,
+        16
+      ],
+      "id": "ace77bfa-36d4-4c6a-b237-9df54c283124",
+      "name": "Send a text message",
+      "webhookId": "d8549ce4-3c54-46dc-b33e-db6b0eb7afb3",
+      "executeOnce": true,
+      "credentials": {
+        "telegramApi": {
+          "id": "LGRnPj9gTEgOttc7",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Telegram Trigger').item.json.message.chat.id }}",
+        "text": "Não identifiquei produtos na sua mensagem. 🤔 Me mande a compra assim: \"comprei 2 iogurtes, pão de forma e alface\".",
+        "additionalFields": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        896,
+        160
+      ],
+      "id": "ba891af5-ba66-4ba5-825d-0066f81285ba",
+      "name": "Send a text message1",
+      "webhookId": "a372b713-fc9a-41ea-af6a-640bc9c4e9d8",
+      "credentials": {
+        "telegramApi": {
+          "id": "LGRnPj9gTEgOttc7",
+          "name": "Telegram account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Basic LLM Chain": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split Out": {
+      "main": [
+        [
+          {
+            "node": "Insert row",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Telegram Trigger": {
+      "main": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Split Out",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Send a text message1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Insert row": {
+      "main": [
+        [
+          {
+            "node": "Send a text message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "3ee271d0-70b4-47be-8f6e-52dd054d790e",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "c6e09b919becf59b94930a0e8f9a72f01767fbd22e2ffe94e65acc52f001d498"
+  },
+  "nodeGroups": [],
+  "id": "mgGlmN6uPtGUMZuu",
+  "tags": []
+}

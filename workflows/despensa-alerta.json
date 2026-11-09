@@ -1,0 +1,218 @@
+{
+  "name": "Despensa — Alerta diário",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "triggerAtHour": 9
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        0,
+        0
+      ],
+      "id": "3b2e3cb4-b679-478f-8cbb-030e4b39e0d3",
+      "name": "Schedule Trigger"
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "dataTableId": {
+          "__rl": true,
+          "value": "YadFalJ1nhOVGtmr",
+          "mode": "list",
+          "cachedResultName": "despensa",
+          "cachedResultUrl": "/projects/FyvjRaaJ3ruWjJol/datatables/YadFalJ1nhOVGtmr"
+        },
+        "returnAll": true
+      },
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        224,
+        0
+      ],
+      "id": "e88be746-fb42-4bb4-9a5c-2e42586a5594",
+      "name": "Get row(s)"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Quantos dias antes do vencimento o alerta deve avisar\nconst DIAS_ALERTA = 3;\n\n// \"Hoje\" à meia-noite, para comparar só datas (sem horas)\nconst hoje = new Date();\nhoje.setHours(0, 0, 0, 0);\n\n// Um registro por produto: se o mesmo item veio em compras diferentes,\n// fica o que vence primeiro\nconst porItem = {};\n\nfor (const linha of $input.all()) {\n  const d = linha.json;\n\n  // Item sem validade estimada: não dá para calcular, pula\n  if (d.validade_estimada_dias === null || d.validade_estimada_dias === undefined) continue;\n\n  // Data da compra = quando a linha foi gravada\n  const compra = new Date(d.createdAt);\n  compra.setHours(0, 0, 0, 0);\n\n  // Vencimento = compra + dias de validade\n  const vence = new Date(compra);\n  vence.setDate(vence.getDate() + Number(d.validade_estimada_dias));\n\n  // Diferença em dias (86.400.000 ms = 1 dia)\n  const diasRestantes = Math.round((vence - hoje) / 86400000);\n\n  // Fica só com o que vence de hoje até DIAS_ALERTA\n  if (diasRestantes < 0 || diasRestantes > DIAS_ALERTA) continue;\n\n  const chave = String(d.item).trim().toLowerCase();\n  if (!porItem[chave] || diasRestantes < porItem[chave].dias_restantes) {\n    porItem[chave] = {\n      item: d.item,\n      quantidade: d.quantidade,\n      dias_restantes: diasRestantes,\n      vence_em: vence.toLocaleDateString('pt-BR'),\n    };\n  }\n}\n\n// Ordena: o que vence primeiro vem primeiro\nconst resultado = Object.values(porItem)\n  .sort((a, b) => a.dias_restantes - b.dias_restantes)\n  .map(x => ({ json: x }));\n\nreturn resultado;"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        448,
+        0
+      ],
+      "id": "85ff8e33-0dea-4157-878a-4144c4ac96d4",
+      "name": "Code in JavaScript"
+    },
+    {
+      "parameters": {
+        "aggregate": "aggregateAllItemData",
+        "destinationFieldName": "itens",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.aggregate",
+      "typeVersion": 1,
+      "position": [
+        672,
+        0
+      ],
+      "id": "9d90d652-1fa8-44a3-b79c-d653d74dffdc",
+      "name": "Aggregate"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Você é um assistente de cozinha prático para uma pessoa que mora sozinha.\n\nEstes itens da despensa vencem nos próximos dias:\n{{ $json.itens.map(i => '- ' + i.item + ' (' + i.quantidade + '), vence em ' + i.dias_restantes + ' dia(s)').join('\\n') }}\n\nSugira UMA receita simples, de até 30 minutos, que use o máximo possível desses itens, priorizando os que vencem primeiro.\nPode supor que a pessoa tem itens básicos: sal, óleo, alho e cebola.\nNão é obrigatório usar todos os itens; não force combinações que não fazem sentido.\n\nFormato da resposta:\nNome da receita\nIngredientes: lista curta\nModo de preparo: até 5 passos curtos e numerados\n\nEscreva em texto simples, sem asteriscos, sem # e sem formatação markdown.\n\nUse no máximo 120 palavras.",
+        "messages": {
+          "messageValues": []
+        },
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.9,
+      "position": [
+        896,
+        0
+      ],
+      "id": "587a6a8a-2913-4685-9ed1-14e0f87a6da1",
+      "name": "Basic LLM Chain"
+    },
+    {
+      "parameters": {
+        "options": {
+          "temperature": 0.7
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1.2,
+      "position": [
+        832,
+        208
+      ],
+      "id": "bb38cbae-0696-409a-a89c-94f42397027f",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "5bw4IPqn6NqFbe9P",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "6721977190",
+        "text": "={{ '⏰ Itens que vencem em breve:\\n' + $('Aggregate').item.json.itens.map(i => '• ' + i.item + ' — ' + (i.dias_restantes === 0 ? 'vence hoje' : 'vence em ' + i.dias_restantes + ' dia(s)')).join('\\n') + '\\n\\n🍳 Sugestão de receita:\\n' + $json.text }}",
+        "additionalFields": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        1264,
+        0
+      ],
+      "id": "0383afee-197f-4453-8419-c9944519d6ff",
+      "name": "Send a text message",
+      "webhookId": "3fb57d93-e48e-4d8b-9767-3f99def8e940",
+      "credentials": {
+        "telegramApi": {
+          "id": "LGRnPj9gTEgOttc7",
+          "name": "Telegram account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Get row(s)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get row(s)": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "Aggregate",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Aggregate": {
+      "main": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Basic LLM Chain": {
+      "main": [
+        [
+          {
+            "node": "Send a text message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "83d9fc27-f3c0-4a71-aa0e-0516388a4c84",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "c6e09b919becf59b94930a0e8f9a72f01767fbd22e2ffe94e65acc52f001d498"
+  },
+  "nodeGroups": [],
+  "id": "N9IFXUIyR0maxYFa",
+  "tags": []
+}
