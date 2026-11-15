@@ -4,7 +4,7 @@ Bot no Telegram que registra compras de supermercado escritas em texto livre, av
 
 > Reduziu o registro de uma compra de **8min34s para 2min38s (−69%)**, com **94% dos itens corretos** e categorias padronizadas de **24 para 7** (medição com 5 compras de 10 itens).
 
-![Alerta diário chegando na tela de bloqueio](docs/img/WhatsApp Image 2026-11-08 at 00.11.43.png)
+![Alerta diário chegando na tela de bloqueio](docs/img/alerta-tela-bloqueio.png)
 
 ---
 
@@ -40,7 +40,7 @@ Exemplo de uso:
 |---|---|---|
 | ![Registro](docs/img/registro.png) | ![Alerta](docs/img/alerta.png) | ![Dashboard](dashboard/dashboard.png) |
 
-🎥 **Vídeo de demonstração (2 min):** [link](https://youtu.be/3LH_QsKQL7I )
+🎥 **Vídeo de demonstração (2 min):** [link](https://youtu.be/3LH_QsKQL7I)
 
 ---
 
@@ -63,7 +63,7 @@ Exemplo de uso:
 - **Sem repetição:** se o mesmo produto veio em compras diferentes, aparece uma vez só, com o vencimento mais próximo.
 - **Receita em texto livre e temperatura mais alta:** quem lê é uma pessoa, e a variedade é desejável.
 
-**Dashboard** (`dashboard/despensa.pbix` e [`dashboard/despensa.pdf`](dashboard/despensa.pdf)): Power BI com total de itens, itens vencendo em até 3 dias e vencidos, número de categorias, próximos vencimentos, itens por categoria e itens por status. Os dados são exportados do n8n por um terceiro workflow (`workflows/despensa-exportar-csv.json`).
+**Dashboard** (`dashboard/despensa.pbit` e [`dashboard/despensa.pdf`](dashboard/despensa.pdf)): Power BI com total de itens, itens vencendo em até 3 dias e vencidos, número de categorias, próximos vencimentos, itens por categoria e itens por status. Os dados são exportados do n8n por um terceiro workflow (`workflows/despensa-exportar-csv.json`).
 
 ---
 
@@ -142,7 +142,7 @@ despensa-inteligente/
 ├── problema.md          # dores que o projeto resolve
 ├── medicoes.md          # método e resultados da medição
 ├── workflows/           # fluxos exportados do n8n (.json)
-├── dashboard/           # despensa.pbix, despensa.pdf, dashboard.png
+├── dashboard/           # despensa.pbit, despensa.pdf, dashboard.png
 ├── dados/               # despensa.csv (dados de exemplo)
 └── docs/img/            # BPMN e prints
 ```
