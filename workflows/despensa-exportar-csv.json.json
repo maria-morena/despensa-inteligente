@@ -1,0 +1,89 @@
+{
+  "name": "Despensa — Exportar CSV",
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "bc1eeff1-7b7b-43c2-bf66-470b1e5782ca",
+      "name": "When clicking ‘Execute workflow’"
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "dataTableId": {
+          "__rl": true,
+          "value": "YadFalJ1nhOVGtmr",
+          "mode": "list",
+          "cachedResultName": "despensa",
+          "cachedResultUrl": "/projects/FyvjRaaJ3ruWjJol/datatables/YadFalJ1nhOVGtmr"
+        },
+        "returnAll": true
+      },
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        224,
+        0
+      ],
+      "id": "4ae9c883-6de0-4f27-9603-d97b21ad0aab",
+      "name": "Get row(s)"
+    },
+    {
+      "parameters": {
+        "options": {
+          "fileName": "despensa.csv"
+        }
+      },
+      "type": "n8n-nodes-base.convertToFile",
+      "typeVersion": 1.2,
+      "position": [
+        448,
+        0
+      ],
+      "id": "04cc4033-765e-4da5-8a65-f942d74fe1a3",
+      "name": "Convert to File"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When clicking ‘Execute workflow’": {
+      "main": [
+        [
+          {
+            "node": "Get row(s)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get row(s)": {
+      "main": [
+        [
+          {
+            "node": "Convert to File",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "01a8e293-8479-42bd-ade9-fd24917aeaea",
+  "meta": {
+    "instanceId": "c6e09b919becf59b94930a0e8f9a72f01767fbd22e2ffe94e65acc52f001d498"
+  },
+  "nodeGroups": [],
+  "id": "3vDTsICLtMUGtBdJ",
+  "tags": []
+}
